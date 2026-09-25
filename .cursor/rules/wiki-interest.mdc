@@ -1,0 +1,15 @@
+---
+description: Boundaries for the Wikipedia interest skill. Metrics stay in code, unit tests stay offline, and scope stays on the written architecture.
+alwaysApply: true
+---
+
+# wiki-interest
+
+- Read `docs/ARCHITECTURE.md` before changing resolve, pageviews, metrics, charts, or the PDF.
+- The model interprets requests and explains `analysis.json`. Python calculates every number.
+- Do not invent Wikipedia titles, pageview rows, or metric values in code, docs, or tests.
+- Do not add Wikidata, caches, thresholds, extra CLI commands, or an automated model runner.
+- Keep business rules in one module. Do not copy metric formulas into `SKILL.md`.
+- Unit tests must not call the network. Use fixtures for HTTP later.
+- Run `python -m unittest discover -s tests -v` with `PYTHONPATH=src` after a code change.
+- Do not expand the milestone in progress unless the task says to.
