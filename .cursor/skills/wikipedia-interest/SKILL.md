@@ -9,7 +9,7 @@ description: >-
 
 # Wikipedia interest
 
-The model understands the question and explains `analysis.json`. `resolve` looks up real Wikipedia titles through MediaWiki. `report` will calculate numbers later; it is not implemented yet.
+The model understands the question and explains `analysis.json` once metrics exist. `resolve` looks up real Wikipedia titles through MediaWiki. `report` fetches daily pageviews into `pageviews.json`. It does not calculate metrics or write the chart or PDF yet.
 
 ## Workflow
 
@@ -28,10 +28,12 @@ The model understands the question and explains `analysis.json`. `resolve` looks
 3. Run `python -m wiki_interest resolve --request request.json` from the repo root, with `PYTHONPATH=src` if the package is not installed.
 4. Stop when any result has status `ambiguous` or `not_found`. Show the candidates and ask. A disambiguation page is not a choice. Do not search another language yourself. A missing langlink stays missing.
 5. After every topic is `resolved`, write `series.json` using only the returned `title` and `langlinks`. One object per line. Do not expand a topic × language × period matrix. Copy a langlink title for another language. Repeat one title with different dates for a period comparison.
-6. Run `python -m wiki_interest report --series series.json --out-dir artifacts/run1`.
-7. Explain `analysis.json` in the user's language. Quote its numbers. Do not recompute them.
+6. Run `python -m wiki_interest report --series series.json --out-dir artifacts/run1`. This writes `pageviews.json` only.
+7. Do not sum `pageviews.json` or describe metrics, a chart, or a PDF. Those files are not produced yet. Quote numbers only from `analysis.json` after a later milestone writes it.
 
-If a command exits with an error, or `report` prints `not implemented`, stop. Do not estimate titles, pageviews, or metrics.
+If a command exits with an error, stop. Do not estimate titles, pageviews, or metrics.
+
+Exact-title matches are deterministic MediaWiki lookups. They can still need clarification when the title is semantically ambiguous for the user (example: English `Java` is the island).
 
 ## Hard limits
 

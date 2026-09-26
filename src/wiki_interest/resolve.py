@@ -153,42 +153,28 @@ def resolve_topic(
     *,
     fetch: GetJson | None = None,
 ) -> dict[str, Any]:
-    """Resolve one topic in langs[0], then attach langlinks for the other langs."""
+    """Resolve one topic from its exact MediaWiki title. Search only if that page is missing or a disambiguation page."""
     if not langs:
         raise ContractError("langs must be a non-empty list")
     source = language_code(langs[0], "langs")
     target_langs = [language_code(item, "langs") for item in langs[1:]]
     client = fetch or get_json
     try:
-        hits = _search(source, query, client)
-        if not hits:
-            return {
-                "query": query,
-                "lang": source,
-                "status": "not_found",
-                "candidates": [],
-                "notes": [],
-            }
+        direct = _load_page(source, query, target_langs, client)
+        if direct is not None and not direct["disambiguation"]:
+            return _resolved_result(query, source, direct, langs)
 
-        first_page: dict[str, Any] | None = None
+        hits = _search(source, query, client)
         articles: list[dict[str, Any]] = []
         seen: set[int] = set()
-        for index, hit in enumerate(hits):
+        for hit in hits:
             page = _load_page(source, hit, target_langs, client)
-            if page is None:
-                continue
-            if index == 0:
-                first_page = page
-            if page["disambiguation"]:
+            if page is None or page["disambiguation"]:
                 continue
             if page["pageid"] in seen:
                 continue
             seen.add(page["pageid"])
             articles.append(page)
-
-        if first_page is not None and not first_page["disambiguation"]:
-            if _title_matches(query, hits[0]) or _title_matches(query, first_page["title"]):
-                return _resolved_result(query, source, first_page, langs)
 
         if not articles:
             return {

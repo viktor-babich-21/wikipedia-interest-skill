@@ -75,7 +75,8 @@ class FakeMediaWiki:
 class ResolveIntegrationTests(unittest.TestCase):
     def test_clear_resolved_topic(self) -> None:
         api = FakeMediaWiki()
-        api.set_search("en", "Python", ["Python", "Python (mythology)"])
+        # Another concept ranks first. The exact title still resolves.
+        api.set_search("en", "Python", ["Python (mythology)", "Python"])
         api.set_page(
             "en",
             "Python",
@@ -109,7 +110,7 @@ class ResolveIntegrationTests(unittest.TestCase):
     def test_multiple_topics(self) -> None:
         api = FakeMediaWiki()
         api.set_search("en", "Python", ["Python"])
-        api.set_search("en", "Java", ["Java (programming language)"])
+        api.set_search("en", "Java (programming language)", ["Java (programming language)"])
         api.set_page(
             "en",
             "Python",
@@ -122,7 +123,7 @@ class ResolveIntegrationTests(unittest.TestCase):
         )
         response = resolve_topics(
             {
-                "topics": ["Python", "Java"],
+                "topics": ["Python", "Java (programming language)"],
                 "langs": ["en"],
                 "start": "2024-01-01",
                 "end": "2024-12-31",
@@ -220,6 +221,7 @@ class ResolveIntegrationTests(unittest.TestCase):
 
     def test_no_search_results(self) -> None:
         api = FakeMediaWiki()
+        api.set_page("en", "zzznothinghere999", _page("zzznothinghere999", 1, missing=True))
         api.set_search("en", "zzznothinghere999", [])
         response = resolve_topics(
             {
@@ -367,3 +369,146 @@ class ResolveIntegrationTests(unittest.TestCase):
                 with redirect_stdout(io.StringIO()):
                     code = main(["resolve", "--request", str(path)])
             self.assertEqual(code, 0)
+
+
+    def test_exact_title_java_resolves_deterministically_but_stays_semantically_ambiguous(self) -> None:
+        """English title Java is the island article, not the programming language.
+
+        Exact-title resolution is deterministic MediaWiki behavior. It is not a
+        confidence score. A user asking about "Java" may still mean the language,
+        so the agent should confirm intent before building series.json.
+        """
+        api = FakeMediaWiki()
+        api.set_search(
+            "en",
+            "Java",
+            ["Java (programming language)", "Java", "JavaScript"],
+        )
+        api.set_page(
+            "en",
+            "Java",
+            _page("Java", 14539, description="island of Indonesia"),
+        )
+        api.set_page(
+            "en",
+            "Java (programming language)",
+            _page("Java (programming language)", 15881, description="programming language"),
+        )
+        api.set_page(
+            "en",
+            "JavaScript",
+            _page("JavaScript", 9845, description="programming language"),
+        )
+        response = resolve_topics(
+            {
+                "topics": ["Java"],
+                "langs": ["en"],
+                "start": "2024-01-01",
+                "end": "2024-01-31",
+            },
+            fetch=api,
+        )
+        result = response["results"][0]
+        self.assertEqual(result["status"], "resolved")
+        self.assertEqual(result["title"], "Java")
+        self.assertEqual(result["pageid"], 14539)
+        self.assertNotEqual(result["title"], "Java (programming language)")
+
+    def test_exact_title_beats_a_higher_ranked_concept(self) -> None:
+        api = FakeMediaWiki()
+        api.set_search(
+            "en",
+            "Python (mythology)",
+            ["Python (programming language)", "Python (mythology)"],
+        )
+        api.set_page(
+            "en",
+            "Python (mythology)",
+            _page("Python (mythology)", 55, description="earth-dragon of Greek myth"),
+        )
+        api.set_page(
+            "en",
+            "Python (programming language)",
+            _page("Python (programming language)", 23862, description="programming language"),
+        )
+        response = resolve_topics(
+            {
+                "topics": ["Python (mythology)"],
+                "langs": ["en"],
+                "start": "2024-01-01",
+                "end": "2024-01-31",
+            },
+            fetch=api,
+        )
+        result = response["results"][0]
+        self.assertEqual(result["status"], "resolved")
+        self.assertEqual(result["title"], "Python (mythology)")
+        self.assertEqual(result["pageid"], 55)
+
+    def test_top_ranked_concept_does_not_resolve_a_disambiguation_query(self) -> None:
+        api = FakeMediaWiki()
+        api.set_search(
+            "en",
+            "Mercury",
+            ["Mercury (planet)", "Mercury (element)", "Mercury"],
+        )
+        api.set_page("en", "Mercury", _page("Mercury", 1, disambiguation=True))
+        api.set_page(
+            "en",
+            "Mercury (planet)",
+            _page("Mercury (planet)", 19007, description="innermost planet"),
+        )
+        api.set_page(
+            "en",
+            "Mercury (element)",
+            _page("Mercury (element)", 19019, description="chemical element"),
+        )
+        response = resolve_topics(
+            {
+                "topics": ["Mercury"],
+                "langs": ["en"],
+                "start": "2024-03-01",
+                "end": "2024-03-31",
+            },
+            fetch=api,
+        )
+        result = response["results"][0]
+        self.assertEqual(result["status"], "ambiguous")
+        self.assertEqual(
+            [item["title"] for item in result["candidates"]],
+            ["Mercury (planet)", "Mercury (element)"],
+        )
+
+    def test_disambiguation_title_is_not_replaced_by_the_top_hit(self) -> None:
+        api = FakeMediaWiki()
+        api.set_search(
+            "en",
+            "Python",
+            ["Python (programming language)", "Python (mythology)", "Python"],
+        )
+        api.set_page("en", "Python", _page("Python", 2, disambiguation=True))
+        api.set_page(
+            "en",
+            "Python (programming language)",
+            _page("Python (programming language)", 23862, description="programming language"),
+        )
+        api.set_page(
+            "en",
+            "Python (mythology)",
+            _page("Python (mythology)", 55, description="earth-dragon of Greek myth"),
+        )
+        response = resolve_topics(
+            {
+                "topics": ["Python"],
+                "langs": ["en"],
+                "start": "2024-01-01",
+                "end": "2024-01-31",
+            },
+            fetch=api,
+        )
+        result = response["results"][0]
+        self.assertEqual(result["status"], "ambiguous")
+        self.assertEqual(
+            [item["title"] for item in result["candidates"]],
+            ["Python (programming language)", "Python (mythology)"],
+        )

@@ -117,7 +117,7 @@ The resolver must distinguish:
 
 A disambiguation page is never accepted as the final article.
 
-The resolver must not use pageview counts to choose a candidate.
+The resolver must not use pageview counts or search rank to choose a candidate. An exact non-disambiguation title resolves deterministically, but it can still need user clarification when the title is semantically ambiguous relative to the question (for example English `Java` is the island article). If that page is a disambiguation page, the remaining search hits stay ambiguous.
 
 Canonical titles returned by `resolve` must be copied exactly into `series.json`; the model must not paraphrase or normalize them manually.
 
@@ -163,7 +163,7 @@ Its value is `null` and it is excluded from total, mean, median, and regression 
 
 This distinction is important: unavailable data must not silently become zero.
 
-The exact historical-vs-recent heuristic used to classify missing versus unavailable days must be documented in `docs/DECISIONS.md` and covered by tests.
+When the API returns at least one row, the latest timestamp is the published-through boundary: omitted earlier dates are missing (0), and later requested dates are unavailable (null). A fixed today-minus-N lag is not treated as an API rule. HTTP 404 is ambiguous and fails closed without inventing zeros. Details are in `docs/DECISIONS.md`.
 
 ---
 
@@ -276,15 +276,13 @@ Included package structure, contracts, documentation, rules, and initial tests.
 
 Complete.
 
-Implemented search, redirects, disambiguation handling, langlinks, CLI wiring, and mocked tests.
-
-Current reported state: 23 tests passing.
+Implemented search, redirects, disambiguation handling, langlinks, CLI wiring, and mocked tests. Exact title lookup replaced first-hit selection during the pageview milestone.
 
 ### Milestone 3 — Pageviews
 
-Next.
+Complete.
 
-Implement:
+Implemented:
 
 - Wikimedia pageviews API
 - daily data
@@ -294,6 +292,14 @@ Implement:
 - retry behavior for 429 and 5xx
 - hard failure when the API cannot provide a series
 - observed/missing/unavailable classification
+- `pageviews.json` from the existing `report` command
+
+Current reported state: 58 tests passing.
+
+Corrections after the first Milestone 3 landing:
+- published-through uses the latest returned pageview timestamp
+- HTTP 404 fails closed with an explicit ambiguity message
+- exact-title semantic ambiguity such as Java is documented and covered by a regression test
 
 ### Milestone 4 — Metrics
 
@@ -392,7 +398,7 @@ Milestone 1: complete.
 
 Milestone 2: complete.
 
-Milestone 3: not started.
+Milestone 3: complete.
 
 Working:
 
@@ -402,10 +408,12 @@ Working:
 - MediaWiki resolver
 - mocked resolver tests
 - `resolve` command
+- daily pageview fetch and day classification
+- `report` writes `pageviews.json`
+- mocked pageview tests
 
 Not implemented:
 
-- pageviews
 - final metric calculations
 - chart
 - PDF

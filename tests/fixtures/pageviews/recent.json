@@ -1,0 +1,13 @@
+{
+  "items": [
+    {
+      "project": "en.wikipedia",
+      "article": "Python",
+      "granularity": "daily",
+      "timestamp": "2026092400",
+      "access": "all-access",
+      "agent": "user",
+      "views": 15
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 """Series-input contract for the report command.
 
-Charts and PDFs are not implemented yet.
+``report`` fetches pageviews separately. Charts and PDFs are not implemented yet.
 """
 
 from __future__ import annotations

@@ -19,6 +19,17 @@ GetJson = Callable[[str, dict[str, str]], Any]
 class HttpError(RuntimeError):
     """Raised when an HTTP request fails or returns non-JSON."""
 
+    def __init__(
+        self,
+        message: str,
+        *,
+        status_code: int | None = None,
+        timed_out: bool = False,
+    ) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+        self.timed_out = timed_out
+
 
 def get_json(
     url: str,
@@ -40,14 +51,20 @@ def get_json(
             status = getattr(response, "status", None) or response.getcode()
     except urllib.error.HTTPError as exc:
         detail = exc.read().decode("utf-8", errors="replace")
-        raise HttpError(f"HTTP {exc.code} for {url}: {detail[:200]}") from exc
+        raise HttpError(
+            f"HTTP {exc.code} for {url}: {detail[:200]}",
+            status_code=exc.code,
+        ) from exc
     except urllib.error.URLError as exc:
+        timed_out = isinstance(exc.reason, TimeoutError)
+        if timed_out:
+            raise HttpError(f"request timed out for {url}", timed_out=True) from exc
         raise HttpError(f"request failed for {url}: {exc.reason}") from exc
     except TimeoutError as exc:
-        raise HttpError(f"request timed out for {url}") from exc
+        raise HttpError(f"request timed out for {url}", timed_out=True) from exc
 
     if status is not None and status >= 400:
-        raise HttpError(f"HTTP {status} for {url}")
+        raise HttpError(f"HTTP {status} for {url}", status_code=status)
     try:
         return json.loads(body)
     except json.JSONDecodeError as exc:

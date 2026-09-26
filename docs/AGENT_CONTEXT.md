@@ -14,6 +14,8 @@ The model must not invent titles or pageviews, recompute metrics, build chart da
 
 ## Current milestone
 
-Milestone 2: MediaWiki `resolve` is implemented. It searches `langs[0]`, follows redirects, rejects disambiguation pages, returns langlinks, and prints one result per topic. `report` still validates series JSON and exits. Pageviews, metrics, the chart, and the PDF are not implemented.
+Milestone 3: `report` fetches daily pageviews for the explicit series list and writes `pageviews.json`. Days after the latest returned timestamp are unavailable; earlier omitted days are missing. HTTP 404 fails closed as ambiguous and never becomes zeros. Exact-title resolution is deterministic but can still need user clarification for queries such as `Java`. Metrics, the chart, and the PDF are not implemented.
 
-Next, when asked: implement pageview fetch and day classification inside `report`. Do not start that work as part of milestone 2.
+`resolve` loads the query title with redirects. A non-disambiguation page is the result. Search rank does not choose an article. A disambiguation page is never selected.
+
+Next, when asked: implement metric calculations. Do not start that work as part of milestone 3.

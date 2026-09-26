@@ -16,6 +16,9 @@ AI agent selects titles and writes series.json
 report
     |
     v
+pageviews.json
+    |
+    v
 analysis.json, chart.png, report.pdf
     |
     v
@@ -24,11 +27,14 @@ AI agent explains analysis.json
 
 `resolve` and `report` are the only commands. The model does not calculate, and the PDF does not contain model-written prose.
 
+This milestone's `report` writes `pageviews.json` only. `analysis.json`, `chart.png`, and `report.pdf` come later. `report` does not resolve titles and does not expand a topic × language × period matrix.
+
 ## Modules
 
-- `http.py` — JSON GET with an identifying User-Agent and timeout. Used by `resolve`; pageviews will reuse it later.
-- `resolve.py` — validates the resolve request, searches MediaWiki in `langs[0]`, follows redirects, rejects disambiguation pages, reads langlinks, returns one result per topic.
-- `analyze.py` — validates `analysis.json`. Later it will fetch daily pageviews, classify days, and calculate metrics.
+- `http.py` — JSON GET with an identifying User-Agent and timeout. HTTP status and timeout are recorded on `HttpError`. Retries are not done here.
+- `resolve.py` — validates the resolve request, loads the query title with redirects, searches MediaWiki in `langs[0]` only when that page is missing or a disambiguation page, reads langlinks, returns one result per topic.
+- `pageviews.py` — fetches daily pageviews for each series, retries 429 and 5xx, classifies days, and writes `pageviews.json`.
+- `analyze.py` — validates `analysis.json`. Later it will calculate metrics. It does not fetch pageviews.
 - `report.py` — validates `series.json`. Later it will write the chart and the one-page PDF from `analysis.json`.
 - `__main__.py` — exposes `resolve` and `report`.
 
@@ -122,15 +128,17 @@ The agent stops before `report` unless every result is `resolved`. Titles in `se
 
 ## How resolve chooses a page
 
-1. Search namespace 0 on `{langs[0]}.wikipedia.org` through the MediaWiki Action API.
-2. Load each hit with `redirects=1` and read `pageprops`, `description`, and `langlinks`.
-3. Skip disambiguation pages.
-4. If the first hit is not a disambiguation page and its search title or canonical title matches the query (case-insensitive), return that page as `resolved`.
-5. Otherwise, if exactly one non-disambiguation article remains, return `resolved`.
+1. Load the query as a title on `{langs[0]}.wikipedia.org` with `redirects=1`. Read `pageprops`, `description`, and `langlinks`.
+2. If that page exists and is not a disambiguation page, return it as `resolved`. Search order is not consulted.
+3. If the page is missing or is a disambiguation page, search namespace 0.
+4. Load each hit with `redirects=1`. Skip disambiguation pages.
+5. If exactly one non-disambiguation article remains, return `resolved`.
 6. If several distinct articles remain, return `ambiguous`.
 7. If none remain, return `not_found`.
 
-No pageview ranking and no confidence score.
+No pageview ranking, no search-rank choice, and no confidence score. A disambiguation page is never the selected article. The canonical title is the MediaWiki `title` of the selected page. Requested language titles come only from that page's `langlinks`.
+
+Exact-title matches are deterministic MediaWiki lookups. They can still be semantically ambiguous for the user. Example: English `Java` resolves to the island article. If the user likely meant the programming language, the agent should ask before writing `series.json`.
 
 ## Series input
 
@@ -157,4 +165,4 @@ No pageview ranking and no confidence score.
 - Wikipedia editions differ in size.
 - Similar movement between series is not causation.
 
-`report` does not calculate these fields yet.
+`report` does not calculate these fields yet. It writes `pageviews.json`, whose series keep `lang`, `title`, `start`, `end`, and `days`. Each day has `date`, `views`, and `status`. Missing views are 0. Unavailable views are null. The series title is the title from `series.json`, not a title taken from the pageview response.
