@@ -1,11 +1,12 @@
 """Series-input contract and report orchestration.
 
-``report`` fetches pageviews, calculates metrics into ``analysis.json``, and
-leaves chart/PDF generation for a later milestone.
+``report`` fetches pageviews, calculates metrics into ``analysis.json``, then
+draws ``chart.png`` and a one-page ``report.pdf`` from that file.
 """
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any, Callable
 
@@ -35,14 +36,24 @@ def run_report(
     fetch: GetJson | None = None,
     sleep: Callable[[float], None] | None = None,
 ) -> Path:
-    """Fetch pageviews, write pageviews.json and analysis.json. No chart or PDF yet."""
+    """Fetch pageviews and write pageviews.json, analysis.json, chart.png, and report.pdf.
+
+    The chart and PDF are rendered from the written analysis.json. They do not
+    recalculate metrics.
+    """
     # Imported here so pageviews can keep importing validate_series_input.
+    from wiki_interest.chart import write_chart
     from wiki_interest.pageviews import fetch_pageviews, write_pageviews_data
+    from wiki_interest.pdf_report import write_pdf
 
     pageviews = fetch_pageviews(series_input, fetch=fetch, sleep=sleep)
     analysis = build_analysis(pageviews)
     write_pageviews_data(pageviews, out_dir)
-    return write_analysis_data(analysis, out_dir)
+    path = write_analysis_data(analysis, out_dir)
+    stored = json.loads(path.read_text(encoding="utf-8"))
+    chart_path = write_chart(stored, out_dir)
+    write_pdf(stored, out_dir, chart_path)
+    return path
 
 
 def _item(data: object, index: int) -> dict[str, str]:

@@ -22,7 +22,8 @@ def main(argv: list[str] | None = None) -> int:
     resolve_cmd.add_argument("--request", required=True, help="Path to resolve request JSON")
 
     report_cmd = commands.add_parser(
-        "report", help="Fetch pageviews and write analysis.json"
+        "report",
+        help="Fetch pageviews and write analysis.json, chart.png, and report.pdf",
     )
     report_cmd.add_argument("--series", required=True, help="Path to series JSON")
     report_cmd.add_argument("--out-dir", required=True, help="Directory for report files")

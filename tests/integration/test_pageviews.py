@@ -383,8 +383,8 @@ class PageviewIntegrationTests(unittest.TestCase):
                 series["days_expected"],
             )
             self.assertNotIn("NaN", (out_dir / "analysis.json").read_text(encoding="utf-8"))
-            self.assertFalse((out_dir / "chart.png").exists())
-            self.assertFalse((out_dir / "report.pdf").exists())
+            self.assertGreater((out_dir / "chart.png").stat().st_size, 0)
+            self.assertGreater((out_dir / "report.pdf").stat().st_size, 0)
 
             series_path.write_text(
                 json.dumps({"series": [_series("en", "Python", "2015-06-30", "2015-07-02")]}),

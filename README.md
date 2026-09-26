@@ -1,18 +1,19 @@
 # wiki-interest
 
-An Agent Skill and a small Python package for comparing Wikipedia article pageviews across topics, languages, and time ranges. A cheap tool-using model interprets the question and explains `analysis.json`. The package resolves real article titles, calculates the metrics, and, in a later milestone, draws one chart and writes a one-page PDF.
+An Agent Skill and a small Python package for comparing Wikipedia article pageviews across topics, languages, and time ranges. A cheap tool-using model interprets the question and explains `analysis.json`. The package resolves real article titles, calculates the metrics, draws one chart, and writes a one-page PDF.
 
-Milestone 4 implements `resolve` against MediaWiki and `report` against the pageview API. `report` writes `pageviews.json` and `analysis.json`. Charts and PDFs are later milestones.
+`resolve` searches MediaWiki. `report` fetches daily pageviews and writes `pageviews.json`, `analysis.json`, `chart.png`, and `report.pdf`. The chart and the PDF are rendered from `analysis.json`.
 
 ## Install
 
 Python 3.11 or newer. From the repository root:
 
 ```powershell
+python -m pip install "matplotlib>=3.8,<4" "fpdf2>=2.7,<3"
 $env:PYTHONPATH = "src"
 ```
 
-No third-party packages are required for this milestone. Pageviews use the Python standard library.
+Pageview retrieval uses the Python standard library. The chart uses matplotlib and the PDF uses fpdf2.
 
 ## Tests
 

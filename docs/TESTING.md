@@ -12,11 +12,11 @@ Pageview unit tests cover day classification against the latest returned timesta
 
 `tests/integration/` mocks MediaWiki HTTP responses for `resolve`: a clear redirect even when another concept ranks first, multiple topics, ambiguous Mercury-like search including when one concept ranks first, a disambiguation title that is not replaced by the top hit, redirects, disambiguation, empty search, langlinks, missing langlinks, Unicode titles, and HTTP/JSON failures.
 
-Pageview integration tests mock the REST API: a successful series, several series in one input, language and period comparisons that are not expanded, an interior missing day, trailing unavailable days, a range that ends on the injected current day, an empty `items` array, 429 and 5xx retries and exhausted retries, timeout, ambiguous 404 handling that does not invent zeros, malformed JSON, a bad response shape, a start date before 2015-07-01, a Unicode title, and a parenthetical title. The report command test checks that a mocked fetch writes `pageviews.json` and `analysis.json` and does not write `chart.png` or `report.pdf`. Those tests must not call the live network.
+Pageview integration tests mock the REST API: a successful series, several series in one input, language and period comparisons that are not expanded, an interior missing day, trailing unavailable days, a range that ends on the injected current day, an empty `items` array, 429 and 5xx retries and exhausted retries, timeout, ambiguous 404 handling that does not invent zeros, malformed JSON, a bad response shape, a start date before 2015-07-01, a Unicode title, and a parenthetical title. The report command test checks that a mocked fetch writes `pageviews.json`, `analysis.json`, a non-empty `chart.png`, and a non-empty `report.pdf`. Those tests must not call the live network.
 
 ## End to end
 
-`tests/e2e/` will hold one fixture run from `series.json` through `analysis.json`, a PNG, and a PDF. It is empty until report generation exists.
+`tests/e2e/test_chart_pdf.py` builds analysis payloads from fixture day rows and renders `chart.png` and `report.pdf`. It does not call Wikimedia. The chart tests check that the file exists and is a non-empty PNG, that each series has a daily line and a 7-day line, that a missing day is y=0, that an unavailable day is a gap rather than zero, and that the 7-day line matches the mean of the included daily values. The PDF tests check that the file exists, is a non-empty one-page PDF, contains the report title, contains metric values taken from the fixture analysis, contains the three caveats, and does not contain a model-written sentence. A two-series fixture and a Cyrillic title must also render on one page.
 
 ## Manual evaluation
 

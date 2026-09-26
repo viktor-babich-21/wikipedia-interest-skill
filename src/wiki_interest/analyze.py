@@ -1,6 +1,6 @@
 """Analysis.json shape and construction from normalized pageview series.
 
-Metric formulas live in ``metrics.py``. Charts and PDFs come later.
+Metric formulas live in ``metrics.py``. This module does not draw the chart or the PDF.
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ DEFAULT_PDF_NAME = "report.pdf"
 DAY_STATUSES = ("observed", "missing", "unavailable")
 CAVEATS = (
     "Page views measure attention to a Wikipedia article, not willingness to pay.",
-    "Wikipedia editions differ in size.",
+    "Wikipedia editions differ in size. These figures are article pageviews.",
     "Similar movement between series is not causation.",
 )
 

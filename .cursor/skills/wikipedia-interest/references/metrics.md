@@ -28,12 +28,12 @@ Included days are `observed` and `missing`. `unavailable` days stay out of every
 
 ## Chart
 
-The chart will draw daily views and a 7-day moving average. For each included day, that average is the mean of the day and the six preceding included days. The first days use however many included days exist. The moving average is a line on the chart, not a summary field.
+The chart draws daily views from `analysis.json` and a 7-day moving average. Missing days are drawn as zero. Unavailable days are gaps, not zeros. For each included day, that average is the mean of the day and the six preceding included days. The first days use however many included days exist. Unavailable days are left out of the window. The moving average is a line on the chart, not a summary field, and it is not stored in `analysis.json`.
 
 ## Caveats
 
 The PDF copies these sentences from `analysis.json`:
 
 - Page views measure attention to a Wikipedia article, not willingness to pay.
-- Wikipedia editions differ in size.
+- Wikipedia editions differ in size. These figures are article pageviews.
 - Similar movement between series is not causation.

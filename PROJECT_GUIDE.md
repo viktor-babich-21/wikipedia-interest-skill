@@ -212,7 +212,7 @@ Included days are `observed` and `missing`. `unavailable` days are left out of e
 
 An even number of included days uses the arithmetic mean of the two central values as the median.
 
-Stored metric values keep full precision. Rounding belongs to later presentation and must not replace the numbers in `analysis.json`.
+Stored metric values keep full precision. The PDF formats them for display and does not write the rounded values back. The display rule is in `docs/ARCHITECTURE.md`.
 
 Formulas live in `src/wiki_interest/metrics.py`. The model-facing definitions are in `.cursor/skills/wikipedia-interest/references/metrics.md`.
 
@@ -220,28 +220,24 @@ Formulas live in `src/wiki_interest/metrics.py`. The model-facing definitions ar
 
 ## 8. Chart and PDF
 
-The chart eventually contains:
+`report` writes `chart.png` and a one-page `report.pdf` after `analysis.json`. Both files are presentation. They read that JSON. They do not recalculate totals, means, slopes, shares, or any other metric, and they do not read `pageviews.json` to derive new numbers.
 
-- daily views
-- a 7-day moving average
+The chart draws the daily rows already stored on each series:
 
-The moving average is a visualization aid, not a headline metric.
+- observed days use the stored view count
+- missing days are drawn as zero
+- unavailable days are gaps in the line, not zeros
 
-The PDF is rendered entirely from deterministic data. It may contain:
+A dashed 7-day line is drawn on top of those daily values. For each included day it is the mean of that day and at most six preceding included days. Early days use the shorter window that exists. Unavailable days are left out of the window. The line is a visual aid. It is not a headline metric and it is not stored in `analysis.json`.
 
-- titles
-- dates
-- metric values
-- chart
-- notes
-- fixed caveats
+Each series is a separate color. The legend shows language and title. The daily line is solid and the average is dashed.
 
-The MVP does not place model-written free-form prose inside the PDF.
+The PDF is one page. Its text is the report title, the dates, the article titles, the metric fields, the series notes, and the fixed caveats, plus the chart image. There is no model-written paragraph. A model explanation would be untested prose sitting next to numbers that were supposed to come only from code.
 
-The PDF includes these caveats:
+The caveats copied from `analysis.json` are:
 
 - Page views measure attention to a Wikipedia article, not willingness to pay.
-- Wikipedia editions differ in size.
+- Wikipedia editions differ in size. These figures are article pageviews.
 - Similar movement between series is not causation.
 
 ---
@@ -258,11 +254,7 @@ Use mocked HTTP responses to test MediaWiki and Wikimedia API behavior.
 
 ### End-to-end test
 
-Use fixture responses and verify that `report` produces:
-
-- `analysis.json`
-- a non-empty chart
-- a PDF with the expected fact strip and caveats
+`tests/e2e/` builds `analysis.json` from fixture day rows and checks `chart.png` and `report.pdf`. It does not call Wikimedia. The chart tests check series count, missing days as zero, unavailable days as gaps, and the 7-day line against the daily values. The PDF tests check one page, the report title, fixture metric values, the three caveats, and the absence of a model-written sentence.
 
 ### Agent evaluation
 
@@ -331,19 +323,17 @@ Implemented in `metrics.py` and written by the existing `report` command as `ana
 - busiest day, views, and share, with no spike flag
 - completeness counts
 
-`report` still writes `pageviews.json`. It does not write the chart or the PDF.
+At the end of this milestone, `report` writes `pageviews.json` and `analysis.json`. `chart.png` and `report.pdf` are added in Milestone 5.
 
 Current reported state: 78 tests passing.
 
 ### Milestone 5 — Chart and PDF
 
-Implement:
+Complete.
 
-- daily line
-- 7-day moving average
-- one-page deterministic PDF
-- fixed caveats
-- fixture-based end-to-end test
+`chart.py` draws `chart.png` from `analysis.json`. `pdf_report.py` draws one-page `report.pdf` from `analysis.json` and that PNG. `report` writes both after `analysis.json`. The 7-day line is visual only. The PDF copies stored metrics and the three fixed caveats. It does not contain model-written prose.
+
+Current reported state: 93 tests passing.
 
 ### Milestone 6 — Final Skill and evaluation
 
@@ -420,6 +410,8 @@ Milestone 3: complete.
 
 Milestone 4: complete.
 
+Milestone 5: complete.
+
 Working:
 
 - project scaffold
@@ -429,17 +421,18 @@ Working:
 - mocked resolver tests
 - `resolve` command
 - daily pageview fetch and day classification
-- `report` writes `pageviews.json` and `analysis.json`
+- `report` writes `pageviews.json`, `analysis.json`, `chart.png`, and `report.pdf`
 - deterministic per-series metrics
+- chart of daily views with a visual 7-day average
+- one-page PDF from `analysis.json` and the chart
 - mocked pageview tests
+- fixture chart and PDF tests
 
 Not implemented:
 
-- chart
-- PDF
 - final Skill and evaluation pass
 
-Current reported state: 78 tests passing.
+Current reported state: 93 tests passing.
 
 ---
 
