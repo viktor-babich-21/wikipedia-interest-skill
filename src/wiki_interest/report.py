@@ -1,13 +1,17 @@
-"""Series-input contract for the report command.
+"""Series-input contract and report orchestration.
 
-``report`` fetches pageviews separately. Charts and PDFs are not implemented yet.
+``report`` fetches pageviews, calculates metrics into ``analysis.json``, and
+leaves chart/PDF generation for a later milestone.
 """
 
 from __future__ import annotations
 
-from typing import Any
+from pathlib import Path
+from typing import Any, Callable
 
 from wiki_interest import ContractError
+from wiki_interest.analyze import build_analysis, write_analysis_data
+from wiki_interest.http import GetJson
 from wiki_interest.resolve import language_code, validate_date_range
 
 _ITEM_KEYS = {"lang", "title", "start", "end"}
@@ -22,6 +26,23 @@ def validate_series_input(data: object) -> dict[str, Any]:
     if not isinstance(series, list) or not series:
         raise ContractError("series must be a non-empty list")
     return {"series": [_item(item, index) for index, item in enumerate(series)]}
+
+
+def run_report(
+    series_input: object,
+    out_dir: str,
+    *,
+    fetch: GetJson | None = None,
+    sleep: Callable[[float], None] | None = None,
+) -> Path:
+    """Fetch pageviews, write pageviews.json and analysis.json. No chart or PDF yet."""
+    # Imported here so pageviews can keep importing validate_series_input.
+    from wiki_interest.pageviews import fetch_pageviews, write_pageviews_data
+
+    pageviews = fetch_pageviews(series_input, fetch=fetch, sleep=sleep)
+    analysis = build_analysis(pageviews)
+    write_pageviews_data(pageviews, out_dir)
+    return write_analysis_data(analysis, out_dir)
 
 
 def _item(data: object, index: int) -> dict[str, str]:

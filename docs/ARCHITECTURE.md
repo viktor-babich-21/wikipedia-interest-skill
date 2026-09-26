@@ -27,15 +27,16 @@ AI agent explains analysis.json
 
 `resolve` and `report` are the only commands. The model does not calculate, and the PDF does not contain model-written prose.
 
-This milestone's `report` writes `pageviews.json` only. `analysis.json`, `chart.png`, and `report.pdf` come later. `report` does not resolve titles and does not expand a topic × language × period matrix.
+This milestone's `report` writes `pageviews.json` and `analysis.json`. `chart.png` and `report.pdf` come later. `report` does not resolve titles and does not expand a topic × language × period matrix.
 
 ## Modules
 
 - `http.py` — JSON GET with an identifying User-Agent and timeout. HTTP status and timeout are recorded on `HttpError`. Retries are not done here.
 - `resolve.py` — validates the resolve request, loads the query title with redirects, searches MediaWiki in `langs[0]` only when that page is missing or a disambiguation page, reads langlinks, returns one result per topic.
 - `pageviews.py` — fetches daily pageviews for each series, retries 429 and 5xx, classifies days, and writes `pageviews.json`.
-- `analyze.py` — validates `analysis.json`. Later it will calculate metrics. It does not fetch pageviews.
-- `report.py` — validates `series.json`. Later it will write the chart and the one-page PDF from `analysis.json`.
+- `metrics.py` — calculates one series from its normalized days. No chart, no PDF, no thresholds.
+- `analyze.py` — builds and validates `analysis.json`. It does not fetch pageviews.
+- `report.py` — validates `series.json`, then writes `pageviews.json` and `analysis.json`. Later it will write the chart and the one-page PDF.
 - `__main__.py` — exposes `resolve` and `report`.
 
 A disambiguation page is never a selected article. If a requested language has no langlink, the resolved result records `missing langlink: <lang>` and does not search that language separately.
@@ -157,7 +158,9 @@ Exact-title matches are deterministic MediaWiki lookups. They can still be seman
 
 ## Analysis output
 
-`analysis.json` will contain `series`, `caveats`, and `artifacts`. Each series carries the metric fields and day rows defined in `.cursor/skills/wikipedia-interest/references/metrics.md`. Day `status` is `observed`, `missing`, or `unavailable`. Missing views are 0. Unavailable views are null.
+`analysis.json` contains `series`, `caveats`, and `artifacts`. Each series carries the metric fields and day rows defined in `.cursor/skills/wikipedia-interest/references/metrics.md`. Day `status` is `observed`, `missing`, or `unavailable`. Missing views are 0. Unavailable views are null.
+
+Included days are `observed` and `missing`. Unavailable days stay in `days` but are excluded from total, mean, median, start, end, percent change, slope, R², and the busiest day. `metrics.py` owns those formulas. Stored numbers are not rounded. `r_squared` and `busiest_day_share` are plain numbers or null. They do not become trend or spike flags.
 
 `caveats` is exactly:
 
@@ -165,4 +168,6 @@ Exact-title matches are deterministic MediaWiki lookups. They can still be seman
 - Wikipedia editions differ in size.
 - Similar movement between series is not causation.
 
-`report` does not calculate these fields yet. It writes `pageviews.json`, whose series keep `lang`, `title`, `start`, `end`, and `days`. Each day has `date`, `views`, and `status`. Missing views are 0. Unavailable views are null. The series title is the title from `series.json`, not a title taken from the pageview response.
+`artifacts.chart` and `artifacts.pdf` name the future files. This milestone does not create them.
+
+`report` also writes `pageviews.json`, whose series keep `lang`, `title`, `start`, `end`, and `days`. Each day has `date`, `views`, and `status`. The series title is the title from `series.json`, not a title taken from the pageview response. The command prints the `analysis.json` path.

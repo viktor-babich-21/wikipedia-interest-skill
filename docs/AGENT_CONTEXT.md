@@ -14,8 +14,8 @@ The model must not invent titles or pageviews, recompute metrics, build chart da
 
 ## Current milestone
 
-Milestone 3: `report` fetches daily pageviews for the explicit series list and writes `pageviews.json`. Days after the latest returned timestamp are unavailable; earlier omitted days are missing. HTTP 404 fails closed as ambiguous and never becomes zeros. Exact-title resolution is deterministic but can still need user clarification for queries such as `Java`. Metrics, the chart, and the PDF are not implemented.
+Milestone 4 is complete. `report` fetches daily pageviews and writes `pageviews.json` and `analysis.json`. `metrics.py` calculates every series number. Missing days count as zero. Unavailable days are excluded from the numerical metrics. Percent change is null, with a note, when start views are 0 or fewer than two included days exist. A constant series stores slope 0 and `r_squared` null. R² and busiest-day share have no thresholds and no trend or spike flags. Stored values are not rounded. Days after the latest returned pageview timestamp are unavailable; earlier omitted days are missing. HTTP 404 fails closed as ambiguous and never becomes zeros. The chart and the PDF are not implemented.
 
-`resolve` loads the query title with redirects. A non-disambiguation page is the result. Search rank does not choose an article. A disambiguation page is never selected.
+`resolve` loads the query title with redirects. A non-disambiguation page is the result. Search rank does not choose an article. A disambiguation page is never selected. Exact-title resolution is deterministic but can still need user clarification for queries such as `Java`.
 
-Next, when asked: implement metric calculations. Do not start that work as part of milestone 3.
+Next, when asked: implement the chart and the one-page PDF. Do not start that work as part of milestone 4.

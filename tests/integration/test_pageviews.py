@@ -348,7 +348,7 @@ class PageviewIntegrationTests(unittest.TestCase):
         self.assertEqual(days[0], {"date": "2026-09-24", "views": 15, "status": "observed"})
         self.assertEqual(days[1]["status"], "unavailable")
 
-    def test_report_command_writes_pageviews_or_exits_nonzero(self) -> None:
+    def test_report_command_writes_pageviews_and_analysis_or_exits_nonzero(self) -> None:
         from wiki_interest.__main__ import main
 
         payload = _load("observed.json")
@@ -363,14 +363,28 @@ class PageviewIntegrationTests(unittest.TestCase):
                 json.dumps({"series": [_series("en", "Python", "2024-01-01", "2024-01-02")]}),
                 encoding="utf-8",
             )
+            stdout = io.StringIO()
             with patch("wiki_interest.pageviews.get_json", fetch):
-                with redirect_stdout(io.StringIO()):
+                with redirect_stdout(stdout):
                     code = main(["report", "--series", str(series_path), "--out-dir", str(out_dir)])
             self.assertEqual(code, 0)
+            self.assertEqual(Path(stdout.getvalue().strip()), out_dir / "analysis.json")
             written = json.loads((out_dir / PAGEVIEWS_FILENAME).read_text(encoding="utf-8"))
             self.assertEqual(written["series"][0]["days"][0]["views"], 120)
-            self.assertFalse((out_dir / "analysis.json").exists())
+            analysis = json.loads((out_dir / "analysis.json").read_text(encoding="utf-8"))
+            series = analysis["series"][0]
+            self.assertEqual(series["total_views"], 210)
+            self.assertEqual(series["mean_daily_views"], 105.0)
+            self.assertEqual(series["percent_change"], -25.0)
+            self.assertEqual(series["slope_views_per_day"], -30.0)
+            self.assertEqual(series["days_expected"], 2)
+            self.assertEqual(
+                series["days_observed"] + series["days_missing"] + series["days_unavailable"],
+                series["days_expected"],
+            )
+            self.assertNotIn("NaN", (out_dir / "analysis.json").read_text(encoding="utf-8"))
             self.assertFalse((out_dir / "chart.png").exists())
+            self.assertFalse((out_dir / "report.pdf").exists())
 
             series_path.write_text(
                 json.dumps({"series": [_series("en", "Python", "2015-06-30", "2015-07-02")]}),

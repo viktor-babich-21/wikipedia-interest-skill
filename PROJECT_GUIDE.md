@@ -200,6 +200,22 @@ There are intentionally no:
 
 The actual metric values are reported rather than converted into hidden pass/fail trend gates.
 
+Included days are `observed` and `missing`. `unavailable` days are left out of every numerical metric. Missing days contribute 0. Statuses are not reinterpreted.
+
+`percent_change` is `(end_views - start_views) / start_views * 100`. It is null when `start_views` is 0 or fewer than two included days exist. `notes` says which of those arithmetic cases applied. If both apply, the note is the fewer-than-two case. That note is not a quality gate.
+
+`slope_views_per_day` and `r_squared` come from one ordinary least-squares line. `x` is 0, 1, 2, ... over included days in series order, so an unavailable day is omitted rather than left as a gap in `x`. A constant series has slope 0 and `r_squared` null: a horizontal line fits, but R² divides by zero variance. The stored value is null, never NaN, 0, or 1. R² is not turned into a trend label.
+
+`busiest_day_share` is `busiest_day_views / total_views`. Ties use the earliest date. The share is null when `total_views` is 0. There is no spike flag.
+
+`days_expected` is the inclusive calendar length from `start` through `end`. `days_observed`, `days_missing`, and `days_unavailable` sum to `days_expected`.
+
+An even number of included days uses the arithmetic mean of the two central values as the median.
+
+Stored metric values keep full precision. Rounding belongs to later presentation and must not replace the numbers in `analysis.json`.
+
+Formulas live in `src/wiki_interest/metrics.py`. The model-facing definitions are in `.cursor/skills/wikipedia-interest/references/metrics.md`.
+
 ---
 
 ## 8. Chart and PDF
@@ -303,19 +319,21 @@ Corrections after the first Milestone 3 landing:
 
 ### Milestone 4 — Metrics
 
-Implement and test:
+Complete.
 
-- total
-- mean
-- median
-- start/end
-- percent change
-- slope
-- R²
-- busiest day/share
+Implemented in `metrics.py` and written by the existing `report` command as `analysis.json`:
+
+- total, mean, median
+- start and end views
+- percent change, null when the arithmetic is undefined, with a note
+- ordinary least-squares slope and R², with no threshold
+- constant series: slope 0, R² null
+- busiest day, views, and share, with no spike flag
 - completeness counts
 
-No quality thresholds.
+`report` still writes `pageviews.json`. It does not write the chart or the PDF.
+
+Current reported state: 78 tests passing.
 
 ### Milestone 5 — Chart and PDF
 
@@ -400,6 +418,8 @@ Milestone 2: complete.
 
 Milestone 3: complete.
 
+Milestone 4: complete.
+
 Working:
 
 - project scaffold
@@ -409,16 +429,17 @@ Working:
 - mocked resolver tests
 - `resolve` command
 - daily pageview fetch and day classification
-- `report` writes `pageviews.json`
+- `report` writes `pageviews.json` and `analysis.json`
+- deterministic per-series metrics
 - mocked pageview tests
 
 Not implemented:
 
-- final metric calculations
 - chart
 - PDF
-- final runtime Skill behavior
-- final evaluation pass
+- final Skill and evaluation pass
+
+Current reported state: 78 tests passing.
 
 ---
 

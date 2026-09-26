@@ -9,7 +9,7 @@ description: >-
 
 # Wikipedia interest
 
-The model understands the question and explains `analysis.json` once metrics exist. `resolve` looks up real Wikipedia titles through MediaWiki. `report` fetches daily pageviews into `pageviews.json`. It does not calculate metrics or write the chart or PDF yet.
+The model understands the question and explains `analysis.json`. `resolve` looks up real Wikipedia titles through MediaWiki. `report` fetches daily pageviews and writes `pageviews.json` and `analysis.json`. Python calculates every metric. The command does not write the chart or PDF yet.
 
 ## Workflow
 
@@ -28,8 +28,8 @@ The model understands the question and explains `analysis.json` once metrics exi
 3. Run `python -m wiki_interest resolve --request request.json` from the repo root, with `PYTHONPATH=src` if the package is not installed.
 4. Stop when any result has status `ambiguous` or `not_found`. Show the candidates and ask. A disambiguation page is not a choice. Do not search another language yourself. A missing langlink stays missing.
 5. After every topic is `resolved`, write `series.json` using only the returned `title` and `langlinks`. One object per line. Do not expand a topic × language × period matrix. Copy a langlink title for another language. Repeat one title with different dates for a period comparison.
-6. Run `python -m wiki_interest report --series series.json --out-dir artifacts/run1`. This writes `pageviews.json` only.
-7. Do not sum `pageviews.json` or describe metrics, a chart, or a PDF. Those files are not produced yet. Quote numbers only from `analysis.json` after a later milestone writes it.
+6. Run `python -m wiki_interest report --series series.json --out-dir artifacts/run1`. This writes `pageviews.json` and `analysis.json`. It does not write a chart or a PDF.
+7. Explain each series using only values in `analysis.json`. Do not recompute totals, means, slopes, or shares from `pageviews.json`. If `percent_change` is null, use the series `notes`. Do not add an R² cutoff, a coverage cutoff, or a spike cutoff, and do not invent trend or spike flags. The file does not contain them. Do not describe a chart or a PDF.
 
 If a command exits with an error, stop. Do not estimate titles, pageviews, or metrics.
 

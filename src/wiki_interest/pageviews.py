@@ -1,8 +1,8 @@
 """Daily Wikimedia pageviews for an explicit series list.
 
-Metrics, charts, and PDFs are later milestones. This module only fetches and
-classifies days. It does not resolve titles and it does not fill failed
-requests with numbers.
+This module fetches and classifies days. Metric calculations live in
+``metrics.py``. Charts and PDFs are a later milestone. It does not resolve
+titles and it does not fill failed requests with numbers.
 """
 
 from __future__ import annotations
@@ -146,6 +146,11 @@ def write_pageviews(
 ) -> Path:
     """Fetch every series, then write pageviews.json. Failures write no file."""
     payload = fetch_pageviews(series_input, fetch=fetch, sleep=sleep)
+    return write_pageviews_data(payload, out_dir)
+
+
+def write_pageviews_data(payload: dict[str, Any], out_dir: str) -> Path:
+    """Write an already-fetched pageviews payload."""
     directory = Path(out_dir)
     directory.mkdir(parents=True, exist_ok=True)
     path = directory / PAGEVIEWS_FILENAME

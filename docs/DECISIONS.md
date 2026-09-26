@@ -81,3 +81,25 @@ When HTTP 200 returns empty `items`, there is no returned boundary. The whole re
 
 This boundary rule is a client heuristic, not an API guarantee.
 
+### Metrics
+
+`metrics.py` is the only place that calculates series numbers. `analyze.py` calls it and checks the `analysis.json` shape. `report` writes `pageviews.json` and `analysis.json`. It does not write `chart.png` or `report.pdf` in this milestone. The `artifacts` object only names those future files.
+
+Included days are `observed` and `missing`. `unavailable` days are excluded from total, mean, median, start, end, percent change, slope, R², and the busiest day. Missing days contribute 0. Status values are not reinterpreted. The normalized day list is chronological, so start and end views are the first and last included rows.
+
+`days_expected` is the inclusive calendar length from `start` through `end`. The three status counts are taken from the day list and must sum to `days_expected`. A series that does not is rejected.
+
+`total_views` sums observed counts. Missing days add 0. Unavailable days are not in the sum.
+
+`mean_daily_views` and `median_daily_views` use included days only. An even count uses the arithmetic mean of the two central values after sorting. Both are null when no included day exists.
+
+`percent_change` is `(end_views - start_views) / start_views * 100`. It is null when `start_views` is 0 or fewer than two included days exist. `notes` records which arithmetic case applied. Fewer-than-two is recorded when both would apply. This is not a quality threshold.
+
+`slope_views_per_day` is the ordinary least-squares slope of included views against x = 0, 1, 2, ... in included-day order. Unavailable days are omitted from x. They are not gaps in the index. The slope is null when fewer than two included days exist. There is no minimum slope and no minimum R².
+
+`r_squared` is the coefficient of determination of that same line. It is null when fewer than two included days exist, and when the included values are constant. A constant series has slope 0, because a horizontal line fits, but the total sum of squares is 0, so R² is undefined. The JSON value is null, never 0, 1, or NaN. R² is not classified and does not set `trend_allowed` or any strong, weak, or significant flag.
+
+`busiest_day` is the included date with the highest views. Ties use the earliest date. `busiest_day_share` is `busiest_day_views / total_views`, a ratio, and is null when `total_views` is 0. There is no spike threshold and no spike flag.
+
+Calculations use the Python standard library. Values are stored at full float precision. Rounding is left to later presentation and must not replace the stored numbers.
+

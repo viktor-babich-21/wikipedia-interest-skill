@@ -1,15 +1,22 @@
-"""Analysis.json shape checks.
+"""Analysis.json shape and construction from normalized pageview series.
 
-Metric calculations are not implemented yet. See references/metrics.md.
+Metric formulas live in ``metrics.py``. Charts and PDFs come later.
 """
 
 from __future__ import annotations
 
+import json
 from datetime import date
+from pathlib import Path
 from typing import Any
 
 from wiki_interest import ContractError
+from wiki_interest.metrics import calculate_series_metrics
 from wiki_interest.resolve import parse_iso_date, validate_date_range
+
+ANALYSIS_FILENAME = "analysis.json"
+DEFAULT_CHART_NAME = "chart.png"
+DEFAULT_PDF_NAME = "report.pdf"
 
 DAY_STATUSES = ("observed", "missing", "unavailable")
 CAVEATS = (
@@ -64,8 +71,66 @@ _COUNT_FIELDS = (
 )
 
 
+def build_analysis(
+    pageviews: object,
+    *,
+    chart: str = DEFAULT_CHART_NAME,
+    pdf: str = DEFAULT_PDF_NAME,
+) -> dict[str, Any]:
+    """Turn Milestone 3 pageview series into analysis.json payload."""
+    payload = _object(pageviews, "pageviews")
+    if set(payload) != {"series"}:
+        raise ContractError("pageviews keys must be ['series']")
+    series = payload["series"]
+    if not isinstance(series, list) or not series:
+        raise ContractError("pageviews.series must be a non-empty list")
+    analyzed = []
+    for index, item in enumerate(series):
+        row = _object(item, f"series[{index}]")
+        analyzed.append(
+            calculate_series_metrics(
+                lang=_text(row.get("lang"), f"series[{index}].lang"),
+                title=_text(row.get("title"), f"series[{index}].title"),
+                start=_text(row.get("start"), f"series[{index}].start"),
+                end=_text(row.get("end"), f"series[{index}].end"),
+                days=_require_days(row.get("days"), index),
+            )
+        )
+    return validate_analysis(
+        {
+            "series": analyzed,
+            "caveats": list(CAVEATS),
+            "artifacts": {"chart": chart, "pdf": pdf},
+        }
+    )
+
+
+def write_analysis(
+    pageviews: object,
+    out_dir: str,
+    *,
+    chart: str = DEFAULT_CHART_NAME,
+    pdf: str = DEFAULT_PDF_NAME,
+) -> Path:
+    """Build metrics and write analysis.json. Does not create chart or PDF files."""
+    return write_analysis_data(build_analysis(pageviews, chart=chart, pdf=pdf), out_dir)
+
+
+def write_analysis_data(analysis: object, out_dir: str) -> Path:
+    """Write an already-built analysis payload. Does not create chart or PDF files."""
+    validated = validate_analysis(analysis)
+    directory = Path(out_dir)
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / ANALYSIS_FILENAME
+    path.write_text(
+        json.dumps(validated, ensure_ascii=False, indent=2, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
+    return path
+
+
 def validate_analysis(data: object) -> dict[str, Any]:
-    """Check analysis.json structure. Does not calculate pageviews."""
+    """Check analysis.json structure. Does not fetch pageviews."""
     payload = _object(data, "analysis")
     if set(payload) != _TOP_KEYS:
         raise ContractError(f"analysis keys must be {sorted(_TOP_KEYS)}")
@@ -90,6 +155,19 @@ def validate_analysis(data: object) -> dict[str, Any]:
         "caveats": list(CAVEATS),
         "artifacts": {"chart": chart, "pdf": pdf},
     }
+
+
+def _require_days(value: object, index: int) -> list[dict[str, Any]]:
+    field = f"series[{index}].days"
+    if not isinstance(value, list):
+        raise ContractError(f"{field} must be a list")
+    return [dict(day) for day in value]
+
+
+def _text(value: object, field: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ContractError(f"{field} must be a non-empty string")
+    return value
 
 
 def _series(data: object, index: int) -> dict[str, Any]:

@@ -1,8 +1,8 @@
 # Metric definitions
 
-`report` will compute these fields. This milestone only checks that `analysis.json` has the right shape. It does not calculate them.
+`report` writes these fields to `analysis.json`. Stored values are not rounded. Presentation may round later, but that must not replace the stored numbers.
 
-Included days are `observed` and `missing`. `unavailable` days stay out of every calculation below. There is no cutoff on R², on how complete the range is, or on the busiest day's share. Report the values as calculated.
+Included days are `observed` and `missing`. `unavailable` days stay out of every calculation below. There is no cutoff on R², on how complete the range is, or on the busiest day's share. Report the values as calculated. Do not turn R² or the busiest-day share into a pass/fail flag.
 
 ## Days
 
@@ -19,9 +19,9 @@ Included days are `observed` and `missing`. `unavailable` days stay out of every
 - `median_daily_views`: median of the same days. Use the average of the two middle values when the count is even. Null when no included day exists.
 - `start_views`: views on the first included day. Null when no included day exists.
 - `end_views`: views on the last included day. Null when no included day exists.
-- `percent_change`: `(end_views - start_views) / start_views * 100`. Null when `start_views` is 0 or fewer than two included days exist.
-- `slope_views_per_day`: ordinary least-squares slope of views against the day index 0, 1, 2, ... of included days. Null when fewer than two included days exist.
-- `r_squared`: coefficient of determination of that line. Null in the same case.
+- `percent_change`: `(end_views - start_views) / start_views * 100`. Null when `start_views` is 0 or fewer than two included days exist. `notes` states which arithmetic case applied. If both apply, the note is the fewer-than-two case. This is not a quality judgment.
+- `slope_views_per_day`: ordinary least-squares slope of views against the day index 0, 1, 2, ... of included days in series order. An unavailable day is left out of that sequence. It is not a hole in x. Null when fewer than two included days exist.
+- `r_squared`: coefficient of determination of that same line. Null when fewer than two included days exist. Also null when every included value is the same: the slope is then 0, but R² divides by zero variance, so it is undefined. Store null, not 0, 1, or NaN. Do not label the trend.
 - `busiest_day`: the included day with the most views. Ties use the earliest date. Null when no included day exists.
 - `busiest_day_views`: views on `busiest_day`. Null when `busiest_day` is null.
 - `busiest_day_share`: `busiest_day_views / total_views`. Null when `busiest_day` is null or `total_views` is 0.
