@@ -20,6 +20,17 @@ Pageview integration tests mock the REST API: a successful series, several serie
 
 ## Manual evaluation
 
-`eval/cases.md` lists six scenarios for a person to run on a cheap model after the commands work. There is no automated model runner. The reviewer checks the command trace and that every number in the chat appears in `analysis.json`.
+`eval/cases.md` is the review sheet and the record of the 2026-09-27 run on Cursor model `composer-2.5-fast`. Attempt 4 passed five scenarios and failed scenario 1. Scenario 3 passed: the resolve query stayed `Mercury (planet)`, and `resolve` was not called again. Preserving semantic qualifiers from the original user request is necessary because a cheap model may otherwise collapse a specific concept into a generic ambiguous title. `resolve` is expected to report `ambiguous` for `Mercury`. The earlier miss was the model shortening that query, not a resolver defect. There is no automated model runner. The six scenarios are:
+
+1. Clear language comparison
+2. Ambiguous topic
+3. Two time periods
+4. Low R² series
+5. One dominant day
+6. Pageview API failure
+
+The reviewer checks the command sequence, that titles and numbers are not invented, that ambiguity stops the report, that null metrics stay undefined, and that the reply keeps the three caveats. Every number in the chat must appear in `analysis.json`.
 
 Resolve integration tests also cover exact-title `Java` resolving to the island article, documenting that deterministic title lookup can still need user clarification.
+
+The suite is 93 tests: unit contracts, metrics, and pageview parsing; mocked MediaWiki and pageview integration; and fixture chart and PDF checks. Count them with `python -m unittest discover -s tests -v`.

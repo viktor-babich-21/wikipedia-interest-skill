@@ -1,6 +1,6 @@
 # Metric definitions
 
-`report` writes these fields to `analysis.json`. Stored values are not rounded. Presentation may round later, but that must not replace the stored numbers.
+`report` writes these fields to `analysis.json`. Stored values are not rounded. The PDF formats numbers for display and must not replace the stored numbers.
 
 Included days are `observed` and `missing`. `unavailable` days stay out of every calculation below. There is no cutoff on R², on how complete the range is, or on the busiest day's share. Report the values as calculated. Do not turn R² or the busiest-day share into a pass/fail flag.
 

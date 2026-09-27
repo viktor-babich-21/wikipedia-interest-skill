@@ -202,3 +202,7 @@ Display formatting does not change the stored JSON:
 - `busiest_day_share` stays the stored ratio and is not rescaled
 
 When every series has the same `start` and `end`, the header shows that range. When they differ, the header says `Date range varies by series` and each series still shows its own dates. A title outside Latin-1 is drawn with DejaVu Sans, which ships with matplotlib. English labels stay in Helvetica.
+
+## Model procedure
+
+The agent workflow, `series.json` rules, ambiguity stops, and explanation limits are in `.cursor/skills/wikipedia-interest/SKILL.md`. Field definitions are in `.cursor/skills/wikipedia-interest/references/metrics.md`. The manual cheap-model review and its pass/fail record are in `eval/cases.md`. There is no automated model runner.

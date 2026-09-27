@@ -10,6 +10,6 @@ alwaysApply: true
 - Do not invent Wikipedia titles, pageview rows, or metric values in code, docs, or tests.
 - Do not add Wikidata, caches, thresholds, extra CLI commands, or an automated model runner.
 - Keep business rules in one module. Do not copy metric formulas into `SKILL.md`.
-- Unit tests must not call the network. Use fixtures for HTTP later.
+- Unit tests must not call the network. HTTP tests use fixtures or mocks.
 - Run `python -m unittest discover -s tests -v` with `PYTHONPATH=src` after a code change.
 - Do not expand the milestone in progress unless the task says to.

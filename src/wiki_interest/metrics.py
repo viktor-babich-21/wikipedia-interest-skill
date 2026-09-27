@@ -33,9 +33,9 @@ def calculate_series_metrics(
     end: str,
     days: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    """Compute the Milestone 4 analysis fields for one series.
+    """Compute the analysis fields for one series.
 
-    Internal arithmetic is not rounded. Presentation may round later.
+    Internal arithmetic is not rounded. The PDF formats values for display.
     """
     included = included_days(days)
     values = [int(day["views"]) for day in included]

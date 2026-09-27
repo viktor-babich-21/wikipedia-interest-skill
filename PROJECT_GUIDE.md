@@ -258,17 +258,18 @@ Use mocked HTTP responses to test MediaWiki and Wikimedia API behavior.
 
 ### Agent evaluation
 
-A small manually reviewed set of scenarios is run with a cheap tool-using model.
+`eval/cases.md` has six scenarios a person runs on a cheap tool-using model: a clear language comparison, an ambiguous topic, two time periods, a low R² series, one dominant day, and a pageview API failure.
 
 Review:
 
-- command choice
+- command sequence
+- no invented titles
+- no invented numbers
 - ambiguity handling
-- exact-title usage
-- number faithfulness
+- null metrics left undefined
 - caveat compliance
 
-There is no automated model-evaluation runner in the MVP.
+There is no automated model-evaluation runner. The 2026-09-27 manual run and its pass/fail record are in `eval/cases.md`.
 
 ---
 
@@ -337,14 +338,13 @@ Current reported state: 93 tests passing.
 
 ### Milestone 6 — Final Skill and evaluation
 
-Finish:
+Complete.
 
-- `SKILL.md`
-- references
-- example scenarios
-- manual evaluation cases
-- documentation cleanup
-- final full test run
+The skill at `.cursor/skills/wikipedia-interest/SKILL.md` states when it applies, the resolve → series.json → report → explain workflow, how to copy titles, when to ask, how to report failures and nulls, and the explanation limits. Metric formulas stay in `references/metrics.md`. The ambiguity example stays in `examples/ambiguous-topic.md`.
+
+`eval/cases.md` has the six scenarios and the recorded manual run. On 2026-09-27, Cursor model `composer-2.5-fast` ran attempt 4 after the skill was told to preserve semantic qualifiers. Five scenarios passed. Scenario 1 failed because the reply added the number 10000, which is not a field in `analysis.json`. Scenario 3 passed: the first resolve query was `Mercury (planet)`, and there was no second resolve. Preserving semantic qualifiers from the original user request is necessary because a cheap model may otherwise collapse a specific concept into a generic ambiguous title. `resolve` is expected to report `ambiguous` for `Mercury`. The earlier scenario 3 failures were the model shortening the user's query, not a resolver defect. No automated model runner was added.
+
+Test count: 93 passing.
 
 ---
 
@@ -412,11 +412,13 @@ Milestone 4: complete.
 
 Milestone 5: complete.
 
+Milestone 6: complete.
+
 Working:
 
 - project scaffold
 - JSON contracts
-- documentation
+- documentation aligned with the implementation
 - MediaWiki resolver
 - mocked resolver tests
 - `resolve` command
@@ -427,12 +429,10 @@ Working:
 - one-page PDF from `analysis.json` and the chart
 - mocked pageview tests
 - fixture chart and PDF tests
+- final skill procedure
+- manual cheap-model evaluation recorded in `eval/cases.md` (final attempt: 5 pass, scenario 3 fail)
 
-Not implemented:
-
-- final Skill and evaluation pass
-
-Current reported state: 93 tests passing.
+Current reported state: 93 tests passing. This is the final implementation milestone. The model evaluation is not 6/6.
 
 ---
 
@@ -448,14 +448,15 @@ At the beginning of a new coding session, read:
 
 Then inspect the current code and tests.
 
-Implement only the current milestone.
+Milestones 1–6 are complete. Do not start another milestone, and do not reintroduce a removed feature, unless the user asks.
 
-After every milestone:
+After a change:
 
 1. run all tests,
 2. inspect the diff,
-3. update the documentation,
-4. update this guide's current status,
-5. commit the working state.
+3. update the documentation if behavior changed,
+4. update this guide's current status if the milestone state changed.
+
+Commit only when the user asks.
 
 The repository is the source of truth. This file is the human-readable explanation of how and why the project was built.

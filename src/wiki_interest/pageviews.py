@@ -1,7 +1,7 @@
 """Daily Wikimedia pageviews for an explicit series list.
 
 This module fetches and classifies days. Metric calculations live in
-``metrics.py``. Charts and PDFs are drawn later from ``analysis.json``.
+``metrics.py``. ``report`` draws the chart and PDF from ``analysis.json``.
 It does not resolve titles and it does not fill failed requests with numbers.
 """
 

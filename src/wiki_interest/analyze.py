@@ -77,7 +77,7 @@ def build_analysis(
     chart: str = DEFAULT_CHART_NAME,
     pdf: str = DEFAULT_PDF_NAME,
 ) -> dict[str, Any]:
-    """Turn Milestone 3 pageview series into analysis.json payload."""
+    """Turn normalized pageview series into an analysis.json payload."""
     payload = _object(pageviews, "pageviews")
     if set(payload) != {"series"}:
         raise ContractError("pageviews keys must be ['series']")

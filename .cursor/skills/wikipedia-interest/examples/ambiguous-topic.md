@@ -27,6 +27,8 @@ User: "How popular was Mercury on English and Ukrainian Wikipedia in March 2024?
 }
 ```
 
-Stop. Ask which subject the user means. Do not call `report`. Do not choose the busier page. Do not treat a disambiguation page as the article.
+Stop. Ask which subject the user means. Do not call `report`. Do not choose the busier page. Do not treat a disambiguation page as the article. There is no confidence score and no ranking.
 
 After the user chooses the planet, `series.json` may contain only that candidate's English title and its Ukrainian langlink, both with the requested dates.
+
+An exact non-disambiguation title can still be the wrong concept. The English title `Java` resolves to the island. If the user did not say which Java they mean, ask before `report`.

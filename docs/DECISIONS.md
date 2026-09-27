@@ -103,3 +103,11 @@ Included days are `observed` and `missing`. `unavailable` days are excluded from
 
 Calculations use the Python standard library. Values are stored at full float precision. The PDF formats them for display and does not replace the stored numbers. The display rule is in `docs/ARCHITECTURE.md`.
 
+## Skill and evaluation
+
+The model procedure is `.cursor/skills/wikipedia-interest/SKILL.md`. It says when to call `resolve`, when to ask, how to copy titles into `series.json`, and how to explain `analysis.json`. Metric formulas stay in `metrics.py` and in `references/metrics.md`. The skill does not recompute them.
+
+`eval/cases.md` records the six scenarios and the 2026-09-27 review on Cursor model `composer-2.5-fast`. Attempt 4 passed five scenarios and failed scenario 1. Scenario 3 passed. The reviewer checks the command sequence, titles, numbers, ambiguity, nulls, and caveats. There is no automated model runner, no confidence score, and no candidate ranking.
+
+Preserving semantic qualifiers from the original user request is necessary because a cheap model may otherwise collapse a specific concept into a generic ambiguous title. The skill tells the model to pass the user's specific wording on the first `resolve` call and not to call `resolve` again after an `ambiguous` result. `resolve` is expected to report `ambiguous` for `Mercury`. The earlier scenario 3 failures happened because the model changed a specific user query into `Mercury`. That was not a resolver defect, and the resolver was not changed to hide it.
+
